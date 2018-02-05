@@ -5,17 +5,16 @@ from rnn.stacked_rnn.model import RNNModel
 
 class SimpleDynamicRNN(RNNModel):
 
-    def __init__(self):
-        super(SimpleDynamicRNN, self).__init__()
+    def __init__(self, num_steps):
+        super(SimpleDynamicRNN, self).__init__(num_steps=num_steps)
 
     def _build_graph(self,
                      state_size=100,
-                     num_steps=200,
                      num_layers=3):
         tf.reset_default_graph()
 
-        x = tf.placeholder(tf.int32, [self.BATCH_SIZE, num_steps], name='input_placeholder')
-        y = tf.placeholder(tf.int32, [self.BATCH_SIZE, num_steps], name='labels_placeholder')
+        x = tf.placeholder(tf.int32, [self.BATCH_SIZE, self.NUM_STEPS], name='input_placeholder')
+        y = tf.placeholder(tf.int32, [self.BATCH_SIZE, self.NUM_STEPS], name='labels_placeholder')
 
         print("")
         print("Input placeholder : {}".format(x.shape))
@@ -51,6 +50,8 @@ class SimpleDynamicRNN(RNNModel):
 
         logits = tf.matmul(rnn_outputs, W) + b
 
+        predictions = tf.nn.softmax(logits)
+
         total_loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits, labels=y_reshaped))
         train_step = tf.train.AdamOptimizer(self.LEARNING_RATE).minimize(total_loss)
 
@@ -58,12 +59,14 @@ class SimpleDynamicRNN(RNNModel):
             x=x,
             y=y,
             init_state=init_state,
+            predictions=predictions,
             final_state=final_state,
             total_loss=total_loss,
             train_step=train_step
         )
 
 
-rnn = SimpleDynamicRNN()
-graph = rnn.build_graph()
-rnn.train_network(graph, 10)
+rnn = SimpleDynamicRNN(10)
+graph = rnn.build_graph(264, 1)
+rnn.train_network(graph, 40, save="./checkpoints/simple-dynamic")
+rnn.generate_characters(graph, "./checkpoints/simple-dynamic", 1000, "HELIAS ANTONIOU", 5)

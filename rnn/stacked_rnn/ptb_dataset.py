@@ -16,10 +16,10 @@ class PTBDataset(object):
             print("Data length:", len(raw_data))
 
         vocab = set(raw_data)
-        idx_to_vocab = dict(enumerate(vocab))
-        vocab_to_idx = dict(zip(idx_to_vocab.values(), idx_to_vocab.keys()))
+        self.idx_to_vocab = dict(enumerate(vocab))
+        self.vocab_to_idx = dict(zip(self.idx_to_vocab.values(),  self.idx_to_vocab.keys()))
 
-        self.data = [vocab_to_idx[c] for c in raw_data]
+        self.data = [self.vocab_to_idx[c] for c in raw_data]
 
         self.vocab_size = len(vocab)
 
