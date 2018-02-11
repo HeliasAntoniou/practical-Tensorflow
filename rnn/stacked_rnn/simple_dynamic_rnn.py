@@ -7,6 +7,7 @@ class SimpleDynamicRNN(RNNModel):
 
     def __init__(self, num_steps):
         super(SimpleDynamicRNN, self).__init__(num_steps=num_steps)
+        self.LEARNING_RATE = 5e-4
 
     def _build_graph(self,
                      state_size=100,
@@ -66,7 +67,8 @@ class SimpleDynamicRNN(RNNModel):
         )
 
 
-rnn = SimpleDynamicRNN(10)
-graph = rnn.build_graph(264, 1)
-rnn.train_network(graph, 40, save="./checkpoints/simple-dynamic")
-rnn.generate_characters(graph, "./checkpoints/simple-dynamic", 1000, "HELIAS ANTONIOU", 5)
+if __name__ == "__main__":
+    rnn = SimpleDynamicRNN(10)
+    graph = rnn.build_graph(264, 1)
+    rnn.train_network(graph, 40, save="./checkpoints/simple-dynamic")
+    rnn.generate_characters(graph, "./checkpoints/simple-dynamic", 1000, "HELIAS ANTONIOU", 5)

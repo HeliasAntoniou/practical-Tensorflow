@@ -5,17 +5,16 @@ from rnn.stacked_rnn.model import RNNModel
 
 class SimpleStaticRNN(RNNModel):
 
-    def __init__(self):
-        super(SimpleStaticRNN, self).__init__()
+    def __init__(self, num_steps):
+        super(SimpleStaticRNN, self).__init__(num_steps=num_steps)
 
     def _build_graph(self,
                      state_size=100,
-                     num_steps=200,
                      num_layers=3):
         tf.reset_default_graph()
 
-        x = tf.placeholder(tf.int32, [self.BATCH_SIZE, num_steps], name='input_placeholder')
-        y = tf.placeholder(tf.int32, [self.BATCH_SIZE, num_steps], name='labels_placeholder')
+        x = tf.placeholder(tf.int32, [self.BATCH_SIZE, self.NUM_STEPS], name='input_placeholder')
+        y = tf.placeholder(tf.int32, [self.BATCH_SIZE, self.NUM_STEPS], name='labels_placeholder')
 
         print("")
         print("Input placeholder : {}".format(x.shape))
@@ -33,7 +32,7 @@ class SimpleStaticRNN(RNNModel):
 
         # Lets create a list instead of a 3d vector. So instead of having a vector of shape:
         # (training_instances, steps, embedding_size) --> steps x (training_instances, embedding_size)
-        rnn_inputs = [tf.squeeze(i) for i in tf.split(rnn_inputs_3d, num_steps, 1)]
+        rnn_inputs = [tf.squeeze(i) for i in tf.split(rnn_inputs_3d, self.NUM_STEPS, 1)]
 
         # Create the cells
         cells = []
@@ -65,9 +64,11 @@ class SimpleStaticRNN(RNNModel):
 
         logits = [tf.matmul(rnn_output, W) + b for rnn_output in rnn_outputs]
 
-        y_as_list = [tf.squeeze(i, squeeze_dims=[1]) for i in tf.split(y, num_steps, 1)]
+        predictions = tf.nn.softmax(logits)
 
-        loss_weights = [tf.ones([self.BATCH_SIZE]) for _ in range(num_steps)]
+        y_as_list = [tf.squeeze(i, squeeze_dims=[1]) for i in tf.split(y, self.NUM_STEPS, 1)]
+
+        loss_weights = [tf.ones([self.BATCH_SIZE]) for _ in range(self.NUM_STEPS)]
         losses = tf.contrib.legacy_seq2seq.sequence_loss_by_example(logits, y_as_list, loss_weights)
         total_loss = tf.reduce_mean(losses)
         train_step = tf.train.AdamOptimizer(self.LEARNING_RATE).minimize(total_loss)
@@ -76,12 +77,14 @@ class SimpleStaticRNN(RNNModel):
             x=x,
             y=y,
             init_state=init_state,
+            predictions=predictions,
             final_state=final_state,
             total_loss=total_loss,
             train_step=train_step
         )
 
 
-rnn = SimpleStaticRNN()
-graph = rnn.build_graph()
-rnn.train_network(graph, 10)
+if __name__ == "__main__":
+    rnn = SimpleStaticRNN(200)
+    graph = rnn.build_graph()
+    rnn.train_network(graph, 10)
